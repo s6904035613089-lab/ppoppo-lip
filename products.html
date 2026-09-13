@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สินค้าทั้งหมด | ppoppo</title>
+<meta name="description" content="ลิปทินท์ ลิปสติก ลิปกลอส และลิปบาล์มจาก ppoppo ครบทุกเฉด พร้อมส่ง">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ppoppo">
+<meta property="og:title" content="สินค้าทั้งหมด | ppoppo">
+<meta property="og:description" content="ลิปทินท์ ลิปสติก ลิปกลอส และลิปบาล์ม ครบทุกเฉด พร้อมส่ง">
+<meta property="og:image" content="assets/images/og-share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/images/logo-mark.svg">
+<link href="assets/vendor/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="ppNav"></div>
+
+<!-- หัวหน้าเพจ -->
+<header style="padding:130px 0 40px;background:radial-gradient(760px 420px at 78% 0%,#ffe0d3 0%,rgba(255,224,211,0) 62%),var(--pp-cream)">
+  <div class="container text-center">
+    <span class="eyebrow">All Products</span>
+    <h1 class="section-title">เลือกเฉดที่ใช่สำหรับคุณ</h1>
+    <p class="section-sub">ทุกชิ้นผลิตล็อตเล็ก สดใหม่ ส่งตรงจากสตูดิโอของเรา</p>
+  </div>
+</header>
+
+<!-- แถบกรอง -->
+<section class="pb-2">
+  <div class="container">
+    <div class="d-flex flex-wrap gap-2 justify-content-center" id="filterBar"></div>
+
+    <div class="row g-2 justify-content-center mt-3">
+      <div class="col-md-5 col-lg-4">
+        <input class="form-control" id="searchBox" placeholder="🔍 ค้นหาชื่อเฉด เช่น peach, red…">
+      </div>
+      <div class="col-md-4 col-lg-3">
+        <select class="form-select" id="sortBox">
+          <option value="default">เรียง: แนะนำ</option>
+          <option value="price-asc">ราคา: น้อย → มาก</option>
+          <option value="price-desc">ราคา: มาก → น้อย</option>
+          <option value="name">ชื่อ A → Z</option>
+          <option value="stock">สต็อกมากที่สุด</option>
+        </select>
+      </div>
+      <div class="col-md-3 col-lg-2 d-flex align-items-center">
+        <div class="form-check ms-md-2">
+          <input class="form-check-input" type="checkbox" id="inStockOnly">
+          <label class="form-check-label small" for="inStockOnly">เฉพาะที่มีของ</label>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- รายการสินค้า -->
+<section class="section pt-4">
+  <div class="container">
+    <p class="text-muted-pp small mb-3" id="resultCount"></p>
+    <div class="row g-4" id="grid">
+      <div class="col-12 text-center py-5 text-muted-pp">กำลังโหลดสินค้า…</div>
+    </div>
+  </div>
+</section>
+
+<div id="ppFooter"></div>
+
+<script src="assets/vendor/bootstrap.bundle.min.js"></script>
+<script src="assets/vendor/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+(async function () {
+  await API.init();
+  mountNav('products');
+  mountCartUI();
+  mountFooter();
+  updateCartBadge();
+  renderCart();
+
+  let cat = new URLSearchParams(location.search).get('cat') || 'all';
+
+  const bar = document.getElementById('filterBar');
+  bar.innerHTML = [{ id: 'all', name: 'ทั้งหมด', emoji: '💗' }, ...PP_CATEGORIES]
+    .map(c => `<button class="filter-pill" data-cat="${c.id}">${c.emoji} ${c.name}</button>`).join('');
+
+  bar.addEventListener('click', e => {
+    const b = e.target.closest('.filter-pill');
+    if (!b) return;
+    cat = b.dataset.cat;
+    draw();
+  });
+
+  ['searchBox', 'sortBox', 'inStockOnly'].forEach(id =>
+    document.getElementById(id).addEventListener('input', draw));
+
+  PP_PRODUCTS_CACHE = (await API.getProducts()).filter(p => p.active !== false);
+  document.addEventListener('pp:products-updated', draw);
+  draw();
+
+  function draw() {
+    document.querySelectorAll('.filter-pill')
+      .forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+
+    const q = document.getElementById('searchBox').value.trim().toLowerCase();
+    const sort = document.getElementById('sortBox').value;
+    const onlyStock = document.getElementById('inStockOnly').checked;
+
+    let list = PP_PRODUCTS_CACHE.slice();
+    if (cat !== 'all') list = list.filter(p => p.category === cat);
+    if (onlyStock) list = list.filter(p => (Number(p.stock) || 0) > 0);
+    if (q) list = list.filter(p =>
+      (p.name + ' ' + (p.code || '') + ' ' + (p.desc || '')).toLowerCase().includes(q));
+
+    const cmp = {
+      'price-asc':  (a, b) => a.price - b.price,
+      'price-desc': (a, b) => b.price - a.price,
+      'name':       (a, b) => a.name.localeCompare(b.name),
+      'stock':      (a, b) => (b.stock || 0) - (a.stock || 0),
+      'default':    (a, b) => (b.featured === true) - (a.featured === true) || String(a.code).localeCompare(String(b.code))
+    }[sort];
+    list.sort(cmp);
+
+    document.getElementById('resultCount').textContent = `พบ ${list.length} รายการ`;
+    document.getElementById('grid').innerHTML = list.length
+      ? list.map(productCard).join('')
+      : `<div class="col-12 text-center py-5">
+           <div style="font-size:2.6rem">🔍</div>
+           <p class="text-muted-pp mt-2">ไม่พบสินค้าที่ตรงกับเงื่อนไข ลองเปลี่ยนคำค้นดูนะคะ</p>
+         </div>`;
+    initReveal();
+  }
+})();
+</script>
+</body>
+</html>

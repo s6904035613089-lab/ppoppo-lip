@@ -1,0 +1,5 @@
+# เอกสารส่วนตัว / ไฟล์ชั่วคราว
+*.pdf
+.DS_Store
+Thumbs.db
+.vercel/

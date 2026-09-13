@@ -1,0 +1,6 @@
+# ไม่ต้องอัปขึ้นเว็บสาธารณะ
+supabase/
+tools/
+.vscode/
+*.pdf
+*.md

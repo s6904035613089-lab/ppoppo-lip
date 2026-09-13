@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>หลังบ้าน | ppoppo POS</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/images/logo-mark.svg">
+<link href="assets/vendor/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="assets/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="admin-shell">
+  <!-- เมนูด้านข้าง -->
+  <aside class="admin-side">
+    <a href="index.html" class="d-block mb-4"><img src="assets/images/logo.svg" alt="ppoppo" style="height:52px"></a>
+    <nav class="nav flex-column">
+      <a class="nav-link active" data-tab="dash"       href="javascript:go('dash')">📊 ภาพรวม</a>
+      <a class="nav-link"        data-tab="sales"      href="javascript:go('sales')">🧾 บิลขาย</a>
+      <a class="nav-link"        data-tab="products"   href="javascript:go('products')">🛍️ สินค้า</a>
+      <a class="nav-link"        data-tab="stock"      href="javascript:go('stock')">📦 คลังสินค้า</a>
+      <a class="nav-link"        data-tab="customers"  href="javascript:go('customers')">👤 ลูกค้า</a>
+      <a class="nav-link"        data-tab="promotions" href="javascript:go('promotions')">🎟️ โปรโมชัน</a>
+      <a class="nav-link"        data-tab="shifts"     href="javascript:go('shifts')">🕒 กะ / ปิดยอด</a>
+      <a class="nav-link"        data-tab="staff"      href="javascript:go('staff')">🧑‍💼 พนักงาน</a>
+      <a class="nav-link"        data-tab="settings"   href="javascript:go('settings')">⚙️ ตั้งค่า</a>
+    </nav>
+    <hr style="border-color:var(--pp-line)">
+    <a class="nav-link" href="pos.html">🧾 ไปหน้าขาย POS</a>
+    <a class="nav-link" href="index.html">🌸 ดูหน้าเว็บไซต์</a>
+    <a class="nav-link text-danger" href="javascript:doLogout()">🚪 ออกจากระบบ</a>
+    <div class="bg-cream-2 rounded-4 p-3 mt-3 small">
+      <div class="text-muted-pp">เข้าสู่ระบบเป็น</div>
+      <div class="fw-semibold" id="whoami">—</div>
+    </div>
+  </aside>
+
+  <!-- เนื้อหา -->
+  <main class="admin-main">
+    <div id="adminView"><div class="text-center py-5 text-muted-pp">กำลังโหลด…</div></div>
+  </main>
+</div>
+
+<!-- ============================================ ฟอร์มเพิ่ม/แก้ไขสินค้า -->
+<div class="modal fade" id="productModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:26px;border:0">
+      <form id="productForm" onsubmit="saveProductForm(event)">
+        <input type="hidden" name="pid"><input type="hidden" name="image">
+        <div class="modal-header border-0">
+          <h5 class="modal-title" id="pmTitle">เพิ่มสินค้าใหม่</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-4">
+            <div class="col-md-5">
+              <label class="form-label">รูปสินค้า</label>
+              <img id="imgPreview" class="w-100 rounded-4 mb-2" style="aspect-ratio:1;object-fit:cover;background:var(--pp-cream-2)"
+                   onerror="this.src='assets/images/placeholder.svg'">
+              <label class="btn btn-pp-outline btn-sm w-100 mb-2">
+                📤 อัปโหลดรูปจากเครื่อง
+                <input type="file" accept="image/*" hidden onchange="onUploadImage(this)">
+              </label>
+              <div class="small text-muted-pp mb-2">หรือเลือกจากคลังรูปในโปรเจกต์</div>
+              <div class="img-picker" id="imgPicker"></div>
+            </div>
+            <div class="col-md-7">
+              <div class="row g-3">
+                <div class="col-8">
+                  <label class="form-label">ชื่อสินค้า *</label>
+                  <input class="form-control" name="name" required placeholder="เช่น Peach Ppoppo">
+                </div>
+                <div class="col-4">
+                  <label class="form-label">รหัส (SKU)</label>
+                  <input class="form-control" name="code" placeholder="P13">
+                </div>
+                <div class="col-6">
+                  <label class="form-label">หมวดหมู่</label>
+                  <select class="form-select" name="category" id="categorySelect"></select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label">บาร์โค้ด</label>
+                  <input class="form-control" name="barcode" placeholder="885xxxxxxxxxx">
+                </div>
+                <div class="col-3">
+                  <label class="form-label">ราคาขาย *</label>
+                  <input class="form-control" type="number" name="price" min="0" step="0.01" required>
+                </div>
+                <div class="col-3">
+                  <label class="form-label">ต้นทุน</label>
+                  <input class="form-control" type="number" name="cost" min="0" step="0.01">
+                </div>
+                <div class="col-3">
+                  <label class="form-label">ราคาเดิม</label>
+                  <input class="form-control" type="number" name="oldPrice" min="0" step="0.01">
+                </div>
+                <div class="col-3">
+                  <label class="form-label">สีเฉด</label>
+                  <input class="form-control form-control-color w-100" type="color" name="shade" style="height:38px">
+                </div>
+                <div class="col-4" id="stockField">
+                  <label class="form-label">สต็อกเริ่มต้น</label>
+                  <input class="form-control" type="number" name="stock" min="0" value="0">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">คำอธิบายสินค้า</label>
+                  <textarea class="form-control" name="desc" rows="3" placeholder="อธิบายเนื้อสัมผัส เฉดสี และจุดเด่นของสินค้า…"></textarea>
+                </div>
+                <div class="col-12 d-flex gap-4">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="featured" id="cbFeat">
+                    <label class="form-check-label small" for="cbFeat">แสดงในหน้าแรก (สินค้าแนะนำ)</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="active" id="cbActive" checked>
+                    <label class="form-check-label small" for="cbActive">เปิดขาย</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">ยกเลิก</button>
+          <button type="submit" class="btn btn-pp px-4">บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ modal ทั่วไป (ใช้ซ้ำ) -->
+<div class="modal fade" id="genericModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" id="genericDialog">
+    <div class="modal-content" style="border-radius:26px;border:0">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="gmTitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="gmBody"></div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/vendor/bootstrap.bundle.min.js"></script>
+<script src="assets/vendor/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/receipt.js"></script>
+<script src="assets/js/admin.js"></script>
+<script>
+(async () => {
+  await API.init();
+  const me = API.requireAdmin();
+  if (!me) return;
+  document.getElementById('whoami').textContent = me.name + ' (' + me.role + ')';
+  adminLoad();
+})();
+async function doLogout() { await API.logout(); location.href = 'login.html'; }
+</script>
+</body>
+</html>

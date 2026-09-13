@@ -1,0 +1,9 @@
+# ppoppo — Korean Lip Studio
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /pos
+Disallow: /pos.html
+Disallow: /login
+Disallow: /login.html

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>หน้าขาย POS | ppoppo</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="assets/images/logo-mark.svg">
+<link href="assets/vendor/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@200;300;400;500;600&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="assets/css/style.css" rel="stylesheet">
+</head>
+<body class="pos-body">
+
+<div class="pos-shell">
+  <!-- ============================== ซ้าย: สินค้า -->
+  <section class="pos-left">
+    <header class="pos-top">
+      <a href="index.html"><img src="assets/images/logo.svg" alt="ppoppo" style="height:40px"></a>
+      <div class="pos-search">
+        <input id="posSearch" class="form-control" autocomplete="off"
+               placeholder="🔍 ค้นหาชื่อ / รหัส หรือยิงบาร์โค้ดแล้วกด Enter">
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span id="shiftBadge" class="badge-pp badge-new">กะ: —</span>
+        <button class="btn btn-ghost btn-sm" onclick="openShiftDialog()">🕒 กะ</button>
+        <a id="adminLink" class="btn btn-ghost btn-sm d-none" href="admin.html">⚙️ หลังบ้าน</a>
+        <button class="btn btn-ghost btn-sm text-danger" onclick="doLogout()">ออก</button>
+      </div>
+    </header>
+
+    <div class="pos-cats" id="posCats"></div>
+    <div class="pos-grid" id="posGrid"><div class="text-center text-muted-pp py-5 w-100">กำลังโหลดสินค้า…</div></div>
+  </section>
+
+  <!-- ============================== ขวา: บิล -->
+  <aside class="pos-right">
+    <div class="pos-bill-head">
+      <div>
+        <div class="fw-semibold">บิลใหม่</div>
+        <div class="small text-muted-pp" id="whoami">—</div>
+      </div>
+      <div class="d-flex gap-1">
+        <button class="btn btn-ghost btn-sm" onclick="showRecent()">🧾 บิลล่าสุด</button>
+        <button class="btn btn-ghost btn-sm text-danger" onclick="clearBill()">🗑️</button>
+      </div>
+    </div>
+
+    <!-- ลูกค้า -->
+    <div class="pos-customer">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text">👤</span>
+        <input id="custPhone" class="form-control" placeholder="เบอร์โทรลูกค้า (ไม่บังคับ)" inputmode="tel">
+        <button class="btn btn-pp-outline" onclick="lookupCustomer()">ค้นหา</button>
+      </div>
+      <div id="custInfo" class="small mt-1 text-muted-pp">ลูกค้าทั่วไป</div>
+    </div>
+
+    <!-- รายการ -->
+    <div class="pos-lines" id="posLines"></div>
+
+    <!-- สรุปยอด -->
+    <div class="pos-summary">
+      <div class="input-group input-group-sm mb-2">
+        <input id="promoCode" class="form-control text-uppercase" placeholder="โค้ดส่วนลด">
+        <button class="btn btn-pp-outline" onclick="applyPromo()">ใช้</button>
+        <input id="manualDiscount" class="form-control" type="number" min="0" placeholder="ลดเพิ่ม ฿" style="max-width:110px" oninput="renderBill()">
+      </div>
+      <div id="promoInfo" class="small text-muted-pp mb-1"></div>
+      <div class="d-flex justify-content-between small"><span>ยอดสินค้า</span><span id="sumSub">฿0</span></div>
+      <div class="d-flex justify-content-between small text-danger"><span>ส่วนลด</span><span id="sumDisc">−฿0</span></div>
+      <div class="d-flex justify-content-between mt-1">
+        <strong>ยอดสุทธิ</strong><strong class="text-pp fs-4" id="sumTotal">฿0</strong>
+      </div>
+      <button class="btn btn-pp w-100 mt-2 py-3 fs-5" id="btnPay" onclick="openPay()" disabled>💳 ชำระเงิน</button>
+    </div>
+  </aside>
+</div>
+
+<!-- ============================== ชำระเงิน -->
+<div class="modal fade" id="payModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:26px;border:0">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title">รับชำระเงิน</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3">
+          <div class="small text-muted-pp">ยอดที่ต้องชำระ</div>
+          <div class="display-6 fw-bold text-pp" id="payTotal">฿0</div>
+        </div>
+        <div class="pay-methods" id="payMethods"></div>
+
+        <div id="payCash" class="mt-3">
+          <label class="form-label small">รับเงินมา (฿)</label>
+          <input id="cashReceived" class="form-control form-control-lg text-center" type="number" min="0" inputmode="decimal" oninput="calcChange()">
+          <div class="d-flex flex-wrap gap-2 mt-2" id="cashQuick"></div>
+          <div class="d-flex justify-content-between mt-3 fs-5">
+            <span>เงินทอน</span><strong id="payChange" class="text-pp">฿0</strong>
+          </div>
+        </div>
+
+        <div id="payRef" class="mt-3 d-none">
+          <label class="form-label small">เลขอ้างอิง / หมายเหตุ (ไม่บังคับ)</label>
+          <input id="payReference" class="form-control" placeholder="เช่น เลขที่รายการโอน หรือ 4 ตัวท้ายบัตร">
+        </div>
+
+        <div id="payError" class="alert alert-danger py-2 small mt-3 d-none"></div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">ยกเลิก</button>
+        <button type="button" class="btn btn-pp px-4" id="btnConfirmPay" onclick="confirmPay()">ยืนยันรับเงิน</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== ใบเสร็จ -->
+<div class="modal fade" id="receiptModal" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:26px;border:0">
+      <div class="modal-body">
+        <div id="receipt" class="receipt"></div>
+      </div>
+      <div class="modal-footer border-0 pt-0 justify-content-between">
+        <button type="button" class="btn btn-ghost" onclick="window.print()">🖨️ พิมพ์</button>
+        <button type="button" class="btn btn-pp px-4" onclick="newSale()">บิลถัดไป →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== กะ -->
+<div class="modal fade" id="shiftModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:26px;border:0">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title" id="shiftTitle">เปิดกะ</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="shiftBody"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== บิลล่าสุด -->
+<div class="modal fade" id="recentModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:26px;border:0">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">บิลล่าสุดวันนี้</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="recentBody"></div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/vendor/bootstrap.bundle.min.js"></script>
+<script src="assets/vendor/supabase.min.js"></script>
+<script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/receipt.js"></script>
+<script src="assets/js/pos.js"></script>
+<script>
+(async () => {
+  await API.init();
+  const me = API.requireStaff('pos');
+  if (!me) return;
+  document.getElementById('whoami').textContent = 'แคชเชียร์: ' + me.name;
+  if (me.role === 'admin') document.getElementById('adminLink').classList.remove('d-none');
+  posLoad();
+})();
+async function doLogout() { await API.logout(); location.href = 'login.html'; }
+</script>
+</body>
+</html>

@@ -80,6 +80,7 @@ powershell -ExecutionPolicy Bypass -File tools\serve.ps1
 - **กะ / ปิดยอด** ประวัติกะและส่วนต่างเงินสด
 - **พนักงาน** เปลี่ยนสิทธิ์ admin / cashier เปิด-ปิดบัญชี
 - **ตั้งค่า** ข้อมูลใบเสร็จ ค่าส่ง เกณฑ์เตือนสต็อก กติกาแต้ม
+- **🔔 แจ้งเตือน Telegram** — ขาย / ออเดอร์ออนไลน์ / รับสินค้าเข้า / สต็อกใกล้หมด-หมด ส่งจากฐานข้อมูลโดยตรง (ตั้งค่าในหน้าตั้งค่า, รัน `supabase/telegram.sql` ก่อน)
 
 ---
 
@@ -94,6 +95,7 @@ ppoppo-lip/
 ├── vercel.json / .vercelignore  ตั้งค่า Vercel
 ├── supabase/
 │   ├── schema.sql               📦 ตาราง + function + trigger + RLS + seed (รันใน SQL Editor)
+│   ├── telegram.sql             🔔 แจ้งเตือน Telegram ผ่าน pg_net (รันต่อจาก schema.sql)
 │   └── README.md                คู่มือตั้งค่า Supabase + อธิบายตาราง
 ├── assets/
 │   ├── css/style.css            ธีม (รวมสไตล์ POS + ใบเสร็จ + print)

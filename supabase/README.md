@@ -20,7 +20,16 @@ Dashboard → **Project Settings → API**
 > anon key เปิดเผยได้ (ออกแบบมาให้ใช้ใน browser) ความปลอดภัยอยู่ที่ Row Level Security
 > **ห้าม** เอา `service_role` key มาใส่ในเว็บเด็ดขาด
 
-## 3) สร้างบัญชีพนักงาน
+## 3) แจ้งเตือนผ่าน Telegram (ไม่บังคับ)
+
+รันไฟล์ `supabase/telegram.sql` ใน SQL Editor อีก 1 ครั้ง (หลัง schema.sql) จากนั้นตั้งค่าที่
+**หลังบ้าน → ตั้งค่า → 🔔 แจ้งเตือนผ่าน Telegram** (มีขั้นตอนสร้างบอทและหา Chat ID อยู่ในหน้านั้น)
+
+- ฐานข้อมูลส่งข้อความเองผ่าน extension `pg_net` — ไม่ต้องมีเซิร์ฟเวอร์เพิ่ม
+- แจ้งเมื่อ: 🧾 ขาย (POS) / 🛒 ออเดอร์ออนไลน์ใหม่ / 🔄 เปลี่ยนสถานะบิล · 📦 รับสินค้าเข้า · ⚠️ ใกล้หมด · ⛔ หมด
+- Token เก็บในตาราง `notify_settings` (แอดมินอ่านได้เท่านั้น) · ประวัติอยู่ใน `notification_log`
+
+## 4) สร้างบัญชีพนักงาน
 
 Dashboard → **Authentication → Users → Add user → Create new user**
 ใส่อีเมล + รหัสผ่าน แล้วติ๊ก *Auto Confirm User*
@@ -43,6 +52,8 @@ sale_items       รายการในบิล (snapshot ชื่อ/รา
 payments         การรับชำระ  cash / promptpay / transfer / card / cod  (แยกหลายรายการต่อบิลได้)
 stock_movements  ประวัติสต็อกทุกครั้ง  purchase / sale / return / adjust / damage
 settings         ค่าตั้งค่าร้าน key/value (ค่าส่ง, แต้ม, ข้อมูลใบเสร็จ)
+notify_settings  ตั้งค่า Telegram (token, chat_id, เปิด-ปิดแต่ละเหตุการณ์)   ← telegram.sql
+notification_log ประวัติข้อความที่ส่ง                                    ← telegram.sql
 ```
 
 ### Function หลัก (เรียกผ่าน `supabase.rpc`)

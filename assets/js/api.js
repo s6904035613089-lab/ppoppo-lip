@@ -291,6 +291,46 @@ const API = {
     return must(await this.sb.from('v_product_sales').select('*').order('qty_sold', { ascending: false }).limit(limit));
   },
 
+  /* ---------------------------------------------------- แจ้งเตือน Telegram */
+  async getNotifySettings() {
+    return must(await this.sb.from('notify_settings').select('*').eq('id', 1).maybeSingle())
+      || { id: 1, enabled: false, telegram_bot_token: '', telegram_chat_id: '', notify_sales: true, notify_restock: true, notify_low_stock: true };
+  },
+  async saveNotifySettings(s) {
+    return must(await this.sb.from('notify_settings').upsert({
+      id: 1, enabled: !!s.enabled,
+      telegram_bot_token: String(s.telegram_bot_token || '').trim(),
+      telegram_chat_id: String(s.telegram_chat_id || '').trim(),
+      notify_sales: !!s.notify_sales, notify_restock: !!s.notify_restock, notify_low_stock: !!s.notify_low_stock,
+      updated_at: new Date().toISOString()
+    }).select().single());
+  },
+  /** ส่งข้อความทดสอบจากฐานข้อมูล แล้วรอผลตอบกลับจาก Telegram */
+  async telegramTest() {
+    const reqId = must(await this.sb.rpc('telegram_test'));
+    for (let i = 0; i < 8; i++) {
+      await new Promise(r => setTimeout(r, 1000));
+      const r = must(await this.sb.rpc('telegram_check', { p_request_id: reqId }));
+      if (r.done) return r;
+    }
+    return { done: false };
+  },
+  /** ดึง chat_id จาก getUpdates (เรียก Telegram ตรงจาก browser — ใช้แค่ตอนตั้งค่า) */
+  async telegramFindChats(token) {
+    const res = await fetch('https://api.telegram.org/bot' + encodeURIComponent(token.trim()) + '/getUpdates');
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.description || 'Token ไม่ถูกต้อง');
+    const seen = {};
+    json.result.forEach(u => {
+      const chat = u.message?.chat || u.edited_message?.chat || u.channel_post?.chat || u.my_chat_member?.chat;
+      if (chat) seen[chat.id] = { id: chat.id, title: chat.title || [chat.first_name, chat.last_name].filter(Boolean).join(' ') || chat.username || String(chat.id), type: chat.type };
+    });
+    return Object.values(seen);
+  },
+  async getNotificationLog(limit = 30) {
+    return must(await this.sb.from('notification_log').select('*').order('created_at', { ascending: false }).limit(limit));
+  },
+
   /* ---------------------------------------------------- ผู้ใช้ / login */
   async login(email, password) {
     if (!this.sb) throw new Error('ยังไม่ได้ตั้งค่า Supabase (ดู supabase/README.md)');

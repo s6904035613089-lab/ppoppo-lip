@@ -651,7 +651,9 @@ async function viewSettings() {
         <div class="text-muted-pp" style="word-break:break-all">Supabase: ${esc(PP_CONFIG.SUPABASE_URL || '(ยังไม่ได้ตั้งค่า)')}</div>
       </div>
     </div></div>
-  </form>`;
+  </form>
+
+  ${await telegramPanel()}`;
 }
 async function saveSettingsForm(e) {
   e.preventDefault();
@@ -659,6 +661,106 @@ async function saveSettingsForm(e) {
   ['shop_name', 'shop_address', 'shop_phone', 'tax_id', 'promptpay_id', 'receipt_footer'].forEach(k => obj[k] = f[k].value.trim());
   ['shipping_fee', 'free_shipping_at', 'low_stock_at', 'points_rate'].forEach(k => obj[k] = Number(f[k].value) || 0);
   try { await API.saveSettings(obj); toast('บันทึกการตั้งค่าแล้ว', 'ok'); } catch (ex) { toast(esc(ex.message), 'err'); }
+}
+
+/* =============================================================
+   แจ้งเตือน Telegram
+   ============================================================= */
+const NOTIFY_EVENT = { sale: '🧾 ขาย', order: '🛒 ออเดอร์ออนไลน์', status: '🔄 เปลี่ยนสถานะ', restock: '📦 รับเข้า', low_stock: '⚠️ ใกล้หมด', out_of_stock: '⛔ หมด', test: '🔔 ทดสอบ' };
+
+async function telegramPanel() {
+  let s, log = [], missing = false;
+  try { [s, log] = await Promise.all([API.getNotifySettings(), API.getNotificationLog(20)]); }
+  catch (e) { missing = true; s = { enabled: false, telegram_bot_token: '', telegram_chat_id: '', notify_sales: true, notify_restock: true, notify_low_stock: true }; }
+  const chk = (name, label, on) => `<div class="form-check form-switch mb-1"><input class="form-check-input" type="checkbox" name="${name}" id="tg_${name}" ${on ? 'checked' : ''}><label class="form-check-label" for="tg_${name}">${label}</label></div>`;
+  return `
+  <h4 class="mt-5 mb-1">🔔 แจ้งเตือนผ่าน Telegram</h4>
+  <p class="text-muted-pp small mb-3">ฐานข้อมูลส่งข้อความเข้า Telegram อัตโนมัติเมื่อมีการขาย รับสินค้าเข้า และสต็อกใกล้หมด/หมด (ทำงานทั้งจาก POS และหน้าร้านออนไลน์)</p>
+  ${missing ? '<div class="alert alert-warning small">ยังไม่ได้ติดตั้งส่วนแจ้งเตือน — รันไฟล์ <code>supabase/telegram.sql</code> ใน SQL Editor ก่อน</div>' : ''}
+  <div class="row g-3">
+    <div class="col-lg-7"><form class="panel" onsubmit="saveTelegram(event)">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0">การเชื่อมต่อ</h6>
+        <div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" name="enabled" id="tg_enabled" ${s.enabled ? 'checked' : ''}><label class="form-check-label" for="tg_enabled">เปิดใช้งาน</label></div>
+      </div>
+      <label class="form-label">Bot Token</label>
+      <div class="input-group mb-2">
+        <input name="telegram_bot_token" id="tgToken" class="form-control" type="password" autocomplete="off" value="${esc(s.telegram_bot_token)}" placeholder="123456789:AAxxxxxxxx…">
+        <button type="button" class="btn btn-ghost" onclick="const i=document.getElementById('tgToken');i.type=i.type==='password'?'text':'password'">👁️</button>
+      </div>
+      <label class="form-label">Chat ID</label>
+      <div class="input-group mb-3">
+        <input name="telegram_chat_id" id="tgChat" class="form-control" value="${esc(s.telegram_chat_id)}" placeholder="เช่น 123456789 หรือ -100xxxxxxxxx (กลุ่ม)">
+        <button type="button" class="btn btn-pp-outline" onclick="findChatId()">🔍 ค้นหา Chat ID</button>
+      </div>
+      <div id="tgChatList" class="small mb-3"></div>
+      <h6 class="mb-2">แจ้งเตือนเมื่อ</h6>
+      ${chk('notify_sales', 'มีการขาย / ออเดอร์ออนไลน์ใหม่ / เปลี่ยนสถานะบิล', s.notify_sales)}
+      ${chk('notify_restock', 'รับสินค้าเข้า / ปรับสต็อกเพิ่ม', s.notify_restock)}
+      ${chk('notify_low_stock', 'สต็อกใกล้หมด (≤ ${API.lowStockAt()}) หรือหมด', s.notify_low_stock)}
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-pp flex-fill" ${missing ? 'disabled' : ''}>บันทึก</button>
+        <button type="button" class="btn btn-ghost" id="btnTgTest" onclick="testTelegram()" ${missing ? 'disabled' : ''}>📨 ส่งข้อความทดสอบ</button>
+      </div>
+      <div id="tgTestResult" class="small mt-2"></div>
+    </form></div>
+    <div class="col-lg-5">
+      <div class="panel mb-3">
+        <h6 class="mb-2">วิธีตั้งค่า (ครั้งเดียว)</h6>
+        <ol class="small mb-0 ps-3" style="line-height:1.8">
+          <li>ใน Telegram ค้นหา <b>@BotFather</b> → พิมพ์ <code>/newbot</code> → ตั้งชื่อ → คัดลอก <b>token</b> มาวางด้านซ้าย</li>
+          <li>เปิดแชทกับบอทที่สร้าง แล้วกด <b>Start</b> (หรือเพิ่มบอทเข้ากลุ่มร้านแล้วพิมพ์ทักทาย 1 ข้อความ)</li>
+          <li>กด <b>🔍 ค้นหา Chat ID</b> → เลือกแชทที่ต้องการ</li>
+          <li>ติ๊ก <b>เปิดใช้งาน</b> → <b>บันทึก</b> → กด <b>ส่งข้อความทดสอบ</b></li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h6 class="mb-2">ประวัติการแจ้งเตือนล่าสุด</h6>
+        ${log.length ? log.map(l => `<div class="py-1 border-bottom small" style="border-color:var(--pp-line)!important">
+            <div class="d-flex justify-content-between"><b>${NOTIFY_EVENT[l.event] || esc(l.event)}</b><span class="text-muted-pp">${fmtDateTime(l.created_at)}</span></div>
+            <div class="text-muted-pp text-truncate">${esc(l.message.replace(/<[^>]+>/g, '').split('\n').slice(0, 2).join(' · '))}</div>
+          </div>`).join('') : '<div class="text-muted-pp small">ยังไม่มีการแจ้งเตือน</div>'}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function saveTelegram(e) {
+  e.preventDefault();
+  const f = e.target;
+  try {
+    await API.saveNotifySettings({
+      enabled: f.enabled.checked, telegram_bot_token: f.telegram_bot_token.value, telegram_chat_id: f.telegram_chat_id.value,
+      notify_sales: f.notify_sales.checked, notify_restock: f.notify_restock.checked, notify_low_stock: f.notify_low_stock.checked
+    });
+    toast('บันทึกการแจ้งเตือนแล้ว 🔔', 'ok');
+  } catch (ex) { toast(esc(ex.message), 'err'); }
+}
+
+async function findChatId() {
+  const token = document.getElementById('tgToken').value.trim();
+  const box = document.getElementById('tgChatList');
+  if (!token) { toast('กรอก Bot Token ก่อน', 'err'); return; }
+  box.innerHTML = '<span class="text-muted-pp">กำลังค้นหา…</span>';
+  try {
+    const chats = await API.telegramFindChats(token);
+    box.innerHTML = chats.length
+      ? '<div class="text-muted-pp mb-1">เลือกแชทที่จะรับการแจ้งเตือน:</div>' + chats.map(c =>
+          `<button type="button" class="btn btn-ghost btn-sm me-1 mb-1" onclick="document.getElementById('tgChat').value='${esc(String(c.id))}';toast('เลือก ${esc(c.title)} แล้ว','ok')">${c.type === 'private' ? '👤' : '👥'} ${esc(c.title)} <span class="product-code">${esc(String(c.id))}</span></button>`).join('')
+      : '<span class="text-danger">ยังไม่พบแชท — เปิดแชทกับบอทแล้วกด Start (หรือพิมพ์ข้อความ 1 ครั้ง) แล้วลองใหม่</span>';
+  } catch (ex) { box.innerHTML = '<span class="text-danger">' + esc(ex.message) + '</span>'; }
+}
+
+async function testTelegram() {
+  const btn = document.getElementById('btnTgTest'), out = document.getElementById('tgTestResult');
+  btn.disabled = true; out.innerHTML = '<span class="text-muted-pp">กำลังส่ง… (บันทึกการตั้งค่าก่อนถ้ายังไม่ได้บันทึก)</span>';
+  try {
+    const r = await API.telegramTest();
+    if (!r.done) out.innerHTML = '<span class="text-warning">ส่งคำขอแล้ว แต่ยังไม่ได้รับผลตอบกลับ — ลองเช็คใน Telegram</span>';
+    else if (r.status === 200) out.innerHTML = '<span class="text-success">✅ ส่งสำเร็จ — ดูข้อความใน Telegram ได้เลย</span>';
+    else out.innerHTML = '<span class="text-danger">❌ Telegram ตอบ ' + esc(String(r.status)) + ': ' + esc(r.body || r.error || '') + '</span>';
+  } catch (ex) { out.innerHTML = '<span class="text-danger">' + esc(ex.message) + '</span>'; }
+  finally { btn.disabled = false; }
 }
 
 /* ---------------------------------------------------- modal helpers */
@@ -675,5 +777,6 @@ Object.assign(window, {
   openProduct, setImage, onUploadImage, saveProductForm, removeProduct, exportProducts,
   receiveStock, adjustDialog, doAdjust, stockHistory,
   openCustomer, saveCustomerForm, removeCustomer, customerSales,
-  openPromo, savePromoForm, removePromo, updateStaff, saveSettingsForm, showModal, hideModal
+  openPromo, savePromoForm, removePromo, updateStaff, saveSettingsForm, showModal, hideModal,
+  saveTelegram, findChatId, testTelegram
 });

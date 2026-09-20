@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>สรุปการทำระบบ POS ppoppo-lip</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  @media screen { body { max-width: 820px; margin: 0 auto; padding: 24px; background: #fff; } section { margin-top: 40px; } }
+  * { box-sizing: border-box; }
+  body { font-family: 'Kanit', 'Segoe UI', sans-serif; font-weight: 300; color: #3f2e34; margin: 0; font-size: 12.5pt; line-height: 1.6; }
+  .cover { text-align: center; padding: 26mm 0 10mm; border-bottom: 2px dashed #f6e2e2; margin-bottom: 8mm; }
+  .cover img { height: 70px; }
+  .cover h1 { font-family: 'Quicksand', 'Kanit', sans-serif; font-size: 24pt; margin: 14px 0 4px; color: #e8455f; }
+  .cover p { margin: 0; color: #9b8288; }
+  .cover .meta { margin-top: 10mm; font-size: 10.5pt; }
+  .pill { display: inline-block; background: #fff7f2; border: 1px solid #f6e2e2; border-radius: 999px; padding: 3px 14px; margin: 2px; font-size: 10pt; }
+  section { page-break-before: always; }
+  h2 { font-family: 'Quicksand', 'Kanit', sans-serif; font-size: 18pt; color: #e8455f; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
+  h2 .num { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #ff8fa8, #e8455f); color: #fff; font-size: 14pt; font-family: 'Quicksand', sans-serif; }
+  .desc { margin: 0 0 10px; }
+  .desc b { font-weight: 500; }
+  figure { margin: 0; border: 1px solid #f6e2e2; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 6px 18px rgba(232,69,95,.08); }
+  figure img { width: 100%; display: block; }
+  figcaption { font-size: 9.5pt; color: #9b8288; padding: 6px 12px; background: #fff7f2; border-top: 1px solid #f6e2e2; }
+  .missing { padding: 30mm 10mm; text-align: center; color: #9b8288; background: #fff7f2; }
+  ul.tight { margin: 6px 0 0; padding-left: 20px; }
+  ul.tight li { margin: 2px 0; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: 10.5pt; background: #fff7f2; padding: 1px 6px; border-radius: 6px; }
+  .links a { color: #e8455f; text-decoration: none; font-weight: 500; }
+  .links table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .links td { padding: 8px 10px; border-bottom: 1px solid #f6e2e2; vertical-align: top; }
+  .links td:first-child { width: 34%; color: #9b8288; }
+  .footer { margin-top: 14mm; font-size: 9.5pt; color: #9b8288; text-align: center; }
+  .prompt-box { background: #fff7f2; border: 1px solid #f6e2e2; border-radius: 14px; padding: 12px 16px; margin: 10px 0 12px; font-size: 11.5pt; }
+  .prompt-box ol { margin: 4px 0 0; padding-left: 22px; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <img src="../assets/images/logo.svg" alt="ppoppo">
+  <h1>สรุปการทำระบบ POS ขายลิปสติก ppoppo-lip</h1>
+  <p>ย้ายหลังบ้านจาก Google Sheet → Supabase · เก็บโค้ดบน GitHub · ขึ้นเว็บด้วย Vercel</p>
+  <div class="meta">
+    <span class="pill">🤖 Claude Code</span>
+    <span class="pill">🐙 GitHub</span>
+    <span class="pill">🗄️ Supabase</span>
+    <span class="pill">▲ Vercel</span>
+    <div style="margin-top:8px">จัดทำเมื่อ 13 กันยายน 2569</div>
+  </div>
+</div>
+
+<!-- ============================================================ 1 -->
+<section>
+  <h2><span class="num">1</span> การ Prompt (สั่งงาน Claude Code)</h2>
+  <p class="desc">
+    เริ่มจากเปิดโปรเจกต์เว็บ ppoppo เดิมใน Claude Code แล้วพิมพ์คำสั่งเดียวให้เปลี่ยนระบบเป็น POS
+    โดยระบุ 3 เงื่อนไขชัดเจน จากนั้น Claude อ่านโค้ดเดิม ถามข้อมูลเพิ่ม 2 ข้อ (มีโปรเจกต์ Supabase แล้วหรือยัง / จะเก็บหน้าร้านออนไลน์ไว้ไหม)
+    แล้วลงมือออกแบบตาราง เขียน SQL หน้า POS หลังบ้าน และคู่มือให้ทั้งหมด
+  </p>
+  <div class="prompt-box">
+    <b>Prompt ที่ใช้:</b> “เปลี่ยนระบบปัจจุบันให้เป็นระบบ POS ที่ขายลิปสติก แบรนด์ ppoppo-lip โดยมีคุณสมบัติดังนี้”
+    <ol>
+      <li>เปลี่ยนจากหลังบ้านเป็น Google Sheet เป็นเก็บข้อมูลจาก Database โดยใช้ Supabase</li>
+      <li>Deploy ผ่าน Vercel</li>
+      <li>Design table ที่ควรจะมีในระบบ POS ของการขายลิปสติก และสร้างใน Supabase ให้ด้วย</li>
+    </ol>
+  </div>
+  <figure>
+    <img src="images/1-prompt.png" alt="หน้าจอ Claude Code" onerror="this.outerHTML='<div class=missing>ยังไม่มีรูป images/1-prompt.png</div>'">
+    <figcaption>รูปที่ 1 — หน้าจอ Claude Code ขณะรับ prompt และเริ่มวิเคราะห์ระบบเดิม</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ 2 -->
+<section>
+  <h2><span class="num">2</span> GitHub (เก็บ Source Code)</h2>
+  <p class="desc">
+    สร้าง Git repository ในเครื่องด้วย <code>git init</code> ใส่ <code>.gitignore</code> แล้ว commit โค้ดทั้งหมด
+    จากนั้นสร้าง repo <b>s6904035613089-lab/ppoppo-lip</b> บน GitHub และ <code>git push -u origin main</code>
+    โค้ดบน GitHub นี้เป็นต้นทางให้ Vercel ดึงไป deploy อัตโนมัติทุกครั้งที่ push ขึ้น branch <code>main</code>
+  </p>
+  <figure>
+    <img src="images/2-github.png" alt="GitHub repository" onerror="this.outerHTML='<div class=missing>ยังไม่มีรูป images/2-github.png</div>'">
+    <figcaption>รูปที่ 2 — Repository ppoppo-lip บน GitHub (1 commit, เชื่อม Deployment กับ Vercel แล้ว)</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ 3 -->
+<section>
+  <h2><span class="num">3</span> การใช้ Supabase (ฐานข้อมูล + ล็อกอิน)</h2>
+  <p class="desc">
+    สร้างโปรเจกต์ <b>ppopp_pos</b> แล้วรันไฟล์ <code>supabase/schema.sql</code> ใน SQL Editor ครั้งเดียว ได้ตาราง 11 ตาราง
+    (products, customers, sales, sale_items, payments, stock_movements, promotions, shifts, staff, categories, settings)
+    พร้อม function <code>create_sale</code> ที่ตัดสต็อก/ใช้โค้ดส่วนลด/สะสมแต้มในธุรกรรมเดียว, trigger คืนสต็อกเมื่อยกเลิกบิล, Row Level Security และข้อมูลสินค้า 12 เฉด
+    จากนั้นนำ Project URL + publishable key ใส่ใน <code>assets/js/config.js</code> และสร้างบัญชีพนักงานที่ Authentication → Users
+  </p>
+  <figure>
+    <img src="images/3-supabase.png" alt="Supabase Table Editor" onerror="this.outerHTML='<div class=missing>ยังไม่มีรูป images/3-supabase.png</div>'">
+    <figcaption>รูปที่ 3 — Table Editor ของ Supabase แสดงตารางทั้งหมดและประวัติสต็อก (stock_movements) จากบิลทดสอบ</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ 4 -->
+<section>
+  <h2><span class="num">4</span> Vercel (ขึ้นเว็บจริง)</h2>
+  <p class="desc">
+    เข้า Vercel ด้วยบัญชี GitHub → Add New Project → Import repo <b>ppoppo-lip</b> → Framework = Other (ไม่ต้อง build) → Deploy
+    ไฟล์ <code>vercel.json</code> ตั้งค่า URL สวย (<code>/pos</code>, <code>/admin</code>, <code>/login</code>), security headers และ cache ให้แล้ว
+    ส่วน <code>.vercelignore</code> กันไม่ให้ไฟล์ SQL/เอกสารขึ้นเว็บสาธารณะ ได้โดเมน <b>ppoppo-lip.vercel.app</b> และจะ deploy ใหม่อัตโนมัติเมื่อ push โค้ด
+  </p>
+  <figure>
+    <img src="images/4-vercel.png" alt="Vercel project overview" onerror="this.outerHTML='<div class=missing>ยังไม่มีรูป images/4-vercel.png</div>'">
+    <figcaption>รูปที่ 4 — หน้า Overview ของโปรเจกต์บน Vercel สถานะ Ready จาก commit บน branch main</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ 5 -->
+<section class="links">
+  <h2><span class="num">5</span> ลิงก์เว็บไซต์และทรัพยากร</h2>
+  <p class="desc">ทุกลิงก์ด้านล่างใช้งานได้จริง หน้า POS และหลังบ้านต้องล็อกอินด้วยบัญชีพนักงานที่สร้างใน Supabase</p>
+  <table>
+    <tr><td>🌸 เว็บไซต์หน้าร้าน</td><td><a href="https://ppoppo-lip.vercel.app">https://ppoppo-lip.vercel.app</a></td></tr>
+    <tr><td>🛍️ สินค้าทั้งหมด</td><td><a href="https://ppoppo-lip.vercel.app/products">https://ppoppo-lip.vercel.app/products</a></td></tr>
+    <tr><td>🔑 เข้าสู่ระบบพนักงาน</td><td><a href="https://ppoppo-lip.vercel.app/login">https://ppoppo-lip.vercel.app/login</a></td></tr>
+    <tr><td>🧾 หน้าขาย POS</td><td><a href="https://ppoppo-lip.vercel.app/pos">https://ppoppo-lip.vercel.app/pos</a></td></tr>
+    <tr><td>⚙️ หลังบ้าน (admin)</td><td><a href="https://ppoppo-lip.vercel.app/admin">https://ppoppo-lip.vercel.app/admin</a></td></tr>
+    <tr><td>🐙 Source code (GitHub)</td><td><a href="https://github.com/s6904035613089-lab/ppoppo-lip">https://github.com/s6904035613089-lab/ppoppo-lip</a></td></tr>
+    <tr><td>🗄️ Supabase project</td><td><a href="https://supabase.com/dashboard/project/mbqhzvhfycafnsobbshk">https://supabase.com/dashboard/project/mbqhzvhfycafnsobbshk</a></td></tr>
+    <tr><td>▲ Vercel project</td><td><a href="https://vercel.com">vercel.com → โปรเจกต์ ppoppo-lip</a></td></tr>
+  </table>
+
+  <h3 style="margin-top:12mm;font-size:13pt;font-weight:500">สรุปสิ่งที่ระบบทำได้</h3>
+  <ul class="tight">
+    <li><b>หน้าร้านออนไลน์</b> — ลูกค้าเลือกเฉด ใส่ตะกร้า ใช้โค้ดส่วนลด สั่งซื้อ → บันทึกเป็นบิลสถานะ "รอชำระ" และตัดสต็อกทันที</li>
+    <li><b>หน้าขาย POS</b> — แตะสินค้า/ยิงบาร์โค้ด, ส่วนลดรายชิ้น/โค้ด/ท้ายบิล, ค้นหาสมาชิกจากเบอร์โทร, รับเงินสด (คำนวณเงินทอน) / พร้อมเพย์ / โอน / บัตร, พิมพ์ใบเสร็จ, เปิด-ปิดกะพร้อมสรุปเงินสด</li>
+    <li><b>หลังบ้าน</b> — ภาพรวมยอดขาย กราฟ 14 วัน สินค้าขายดี, จัดการบิล/สินค้า/สต็อก/ลูกค้า/โปรโมชัน/กะ/พนักงาน/ตั้งค่าร้าน, ดาวน์โหลด CSV</li>
+    <li><b>ความปลอดภัย</b> — Row Level Security: ลูกค้าทั่วไปอ่านได้แค่สินค้า, ข้อมูลบิล/ลูกค้า/สต็อกเห็นได้เฉพาะพนักงานที่ล็อกอิน</li>
+  </ul>
+  <div class="footer">ppoppo Korean Lip Studio · จูบแรกของริมฝีปากคุณ 💋</div>
+</section>
+
+</body>
+</html>

@@ -1,8 +1,9 @@
 # build-pdf.ps1 - render docs/summary.html to docs/ppoppo-pos-summary.pdf using Edge/Chrome headless
-# Usage: powershell -ExecutionPolicy Bypass -File docs\build-pdf.ps1
+# Usage: powershell -ExecutionPolicy Bypass -File docs\build-pdf.ps1 [-Name summary] [-Out ppoppo-pos-summary]
+param([string]$Name = "summary", [string]$Out = "ppoppo-pos-summary")
 $here = $PSScriptRoot
-$html = Join-Path $here 'summary.html'
-$pdf  = Join-Path $here 'ppoppo-pos-summary.pdf'
+$html = Join-Path $here ($Name + ".html")
+$pdf  = Join-Path $here ($Out + ".pdf")
 $browser = @(
   "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe",
   "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",

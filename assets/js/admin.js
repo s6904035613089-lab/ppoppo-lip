@@ -697,7 +697,7 @@ async function telegramPanel() {
       <h6 class="mb-2">แจ้งเตือนเมื่อ</h6>
       ${chk('notify_sales', 'มีการขาย / ออเดอร์ออนไลน์ใหม่ / เปลี่ยนสถานะบิล', s.notify_sales)}
       ${chk('notify_restock', 'รับสินค้าเข้า / ปรับสต็อกเพิ่ม', s.notify_restock)}
-      ${chk('notify_low_stock', 'สต็อกใกล้หมด (≤ ${API.lowStockAt()}) หรือหมด', s.notify_low_stock)}
+      ${chk('notify_low_stock', 'สต็อกใกล้หมด (≤ ' + API.lowStockAt() + ') หรือหมด', s.notify_low_stock)}
       <div class="d-flex gap-2 mt-3">
         <button class="btn btn-pp flex-fill" ${missing ? 'disabled' : ''}>บันทึก</button>
         <button type="button" class="btn btn-ghost" id="btnTgTest" onclick="testTelegram()" ${missing ? 'disabled' : ''}>📨 ส่งข้อความทดสอบ</button>
